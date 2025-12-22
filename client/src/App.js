@@ -1,34 +1,66 @@
 import React, { useState, useEffect } from 'react';
 
+const API_URL = 'http://localhost:5000/api';
+
 function App() {
   const [name, setName] = useState('');
   const [greeting, setGreeting] = useState('');
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Load history from localStorage on initial render (lazy initialization)
-  const [history, setHistory] = useState(() => {
-    const savedHistory = localStorage.getItem('nameHistory');
-    return savedHistory ? JSON.parse(savedHistory) : [];
-  });
-
-  // Save history to localStorage whenever it changes
+  // Fetch history from API on mount
   useEffect(() => {
-    localStorage.setItem('nameHistory', JSON.stringify(history));
-  }, [history]);
+    fetchHistory();
+  }, []);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (name.trim()) {
-      setGreeting(`Hello, ${name}!`);
-      setHistory([...history, { name: name.trim(), timestamp: new Date().toLocaleString() }]);
-      setName('');
+  const fetchHistory = async () => {
+    try {
+      const res = await fetch(`${API_URL}/greetings`);
+      const data = await res.json();
+      setHistory(data);
+    } catch (err) {
+      console.error('Failed to fetch history:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const clearHistory = () => {
-    setHistory([]);
-    setGreeting('');
-    localStorage.removeItem('nameHistory');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (name.trim()) {
+      try {
+        const res = await fetch(`${API_URL}/greetings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: name.trim() })
+        });
+        const newGreeting = await res.json();
+        setGreeting(`Hello, ${name}!`);
+        setHistory([...history, newGreeting]);
+        setName('');
+      } catch (err) {
+        console.error('Failed to save greeting:', err);
+      }
+    }
   };
+
+  const clearHistory = async () => {
+    try {
+      await fetch(`${API_URL}/greetings`, { method: 'DELETE' });
+      setHistory([]);
+      setGreeting('');
+    } catch (err) {
+      console.error('Failed to clear history:', err);
+    }
+  };
+
+  const formatDate = (timestamp) => {
+    return new Date(timestamp).toLocaleString();
+  };
+
+  if (loading) {
+    return <div className="app"><p>Loading...</p></div>;
+  }
 
   return (
     <div className="app">
@@ -50,10 +82,10 @@ function App() {
         <div className="history">
           <h2>History</h2>
           <ul>
-            {history.map((entry, index) => (
-              <li key={index}>
+            {history.map((entry) => (
+              <li key={entry._id}>
                 <span className="name">{entry.name}</span>
-                <span className="timestamp">{entry.timestamp}</span>
+                <span className="timestamp">{formatDate(entry.timestamp)}</span>
               </li>
             ))}
           </ul>
