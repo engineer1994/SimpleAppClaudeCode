@@ -2,10 +2,11 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const path = require('path');
 const Greeting = require('./models/Greeting');
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
@@ -15,12 +16,11 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-// Health check endpoint
+// API routes
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running' });
 });
 
-// Get all greetings
 app.get('/api/greetings', async (req, res) => {
   try {
     const greetings = await Greeting.find().sort({ timestamp: 1 });
@@ -30,7 +30,6 @@ app.get('/api/greetings', async (req, res) => {
   }
 });
 
-// Add a new greeting
 app.post('/api/greetings', async (req, res) => {
   try {
     const greeting = new Greeting({ name: req.body.name });
@@ -41,7 +40,6 @@ app.post('/api/greetings', async (req, res) => {
   }
 });
 
-// Delete all greetings
 app.delete('/api/greetings', async (req, res) => {
   try {
     await Greeting.deleteMany({});
@@ -51,6 +49,15 @@ app.delete('/api/greetings', async (req, res) => {
   }
 });
 
+// Serve React build in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../client/build')));
+
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+  });
+}
+
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
