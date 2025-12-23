@@ -4,6 +4,8 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
 const Greeting = require('./models/Greeting');
+const authRoutes = require('./routes/auth');
+const auth = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -16,23 +18,32 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-// API routes
+// Health check (public)
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running' });
 });
 
-app.get('/api/greetings', async (req, res) => {
+// Auth routes (public)
+app.use('/api/auth', authRoutes);
+
+// Protected greeting routes (require authentication)
+app.get('/api/greetings', auth, async (req, res) => {
   try {
-    const greetings = await Greeting.find().sort({ timestamp: 1 });
+    // Only get greetings for the logged-in user
+    const greetings = await Greeting.find({ userId: req.userId }).sort({ timestamp: 1 });
     res.json(greetings);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-app.post('/api/greetings', async (req, res) => {
+app.post('/api/greetings', auth, async (req, res) => {
   try {
-    const greeting = new Greeting({ name: req.body.name });
+    // Create greeting linked to the logged-in user
+    const greeting = new Greeting({
+      name: req.body.name,
+      userId: req.userId
+    });
     await greeting.save();
     res.status(201).json(greeting);
   } catch (err) {
@@ -40,9 +51,10 @@ app.post('/api/greetings', async (req, res) => {
   }
 });
 
-app.delete('/api/greetings', async (req, res) => {
+app.delete('/api/greetings', auth, async (req, res) => {
   try {
-    await Greeting.deleteMany({});
+    // Only delete greetings for the logged-in user
+    await Greeting.deleteMany({ userId: req.userId });
     res.json({ message: 'History cleared' });
   } catch (err) {
     res.status(500).json({ error: err.message });

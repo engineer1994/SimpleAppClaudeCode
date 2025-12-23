@@ -112,3 +112,77 @@ button:hover {
 .clear-btn:hover {
   background: #c82333;
 }
+
+/* Auth styles */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.header h1 {
+  margin-bottom: 0;
+}
+
+.logout-btn {
+  background: #6c757d;
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+.logout-btn:hover {
+  background: #5a6268;
+}
+
+.auth-container {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.auth-tabs {
+  display: flex;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #eee;
+}
+
+.auth-tabs button {
+  flex: 1;
+  background: transparent;
+  color: #666;
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+
+.auth-tabs button:hover {
+  background: transparent;
+  color: #333;
+}
+
+.auth-tabs button.active {
+  color: #007bff;
+  border-bottom-color: #007bff;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.auth-form input {
+  flex: none;
+}
+
+.auth-form button {
+  margin-top: 10px;
+}
+
+.error {
+  color: #dc3545;
+  font-size: 14px;
+  margin: 0;
+}
